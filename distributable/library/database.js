@@ -82,13 +82,14 @@ class Database extends EventEmitter {
 
   async isMigrationInstalled(name) {
 
-    let data = await this._database.collection('migration').findOne({ 'name': name, 'installed': { $ne: null }, 'uninstalled': null });
+    let migration = await this._database.collection('migration').findOne({ 'name': name }); //, 'installed': { $ne: null }, 'uninstalled': null })
 
-    return Is.null(data) ? false : true;
+    return Is.not.null(migration) && Is.not.null(migration.installed) && Is.null(migration.uninstalled); // Is.null(data) ? false : true
 
   }
 
   installMigration(name) {
+    // findOneAndReplace because a record may not exist
     return this._database.collection('migration').findOneAndReplace(
     { 'name': name },
     { 'name': name, 'installed': new Date(), 'uninstalled': null },
@@ -97,7 +98,7 @@ class Database extends EventEmitter {
 
   uninstallMigration(name) {
     return this._database.collection('migration').findOneAndUpdate(
-    { 'name': name, 'installed': { $ne: null }, 'uninstalled': null },
+    { 'name': name }, // 'installed': { $ne: null }, 'uninstalled': null }, 
     { '$set': { 'uninstalled': new Date() } });
   }
 
