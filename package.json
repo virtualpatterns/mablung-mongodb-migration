@@ -1,0 +1,91 @@
+{
+  "author": "virtualpatterns.com <code@virtualpatterns.com> (http://www.virtualpatterns.com)",
+  "ava": {
+    "failFast": true,
+    "files": [
+      "distributable/test/**/*.test.*"
+    ],
+    "nodeArguments": [
+      "--no-warnings",
+      "--unhandled-rejections=strict"
+    ],
+    "require": [
+      "@virtualpatterns/mablung-source-map-support/install"
+    ],
+    "verbose": true
+  },
+  "c8": {
+    "exclude": [
+      "distributable/test"
+    ],
+    "reporter": [
+      "lcov"
+    ]
+  },
+  "description": "TBD",
+  "exports": {
+    ".": "./distributable/index.js",
+    "./package.json": "./package.json"
+  },
+  "license": "GPL-3.0+",
+  "name": "@virtualpatterns/mablung-mongodb-migration",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/virtualpatterns/mablung-mongodb-migration"
+  },
+  "scripts": {
+    "refresh:10": "shx rm -f package-lock.json",
+    "refresh:20": "shx rm -Rf node_modules",
+    "refresh:30": "npm cache clean --force",
+    "refresh:40": "npm install",
+    "refresh": "run-s --silent refresh:*",
+    "upgrade:10": "npm-check-updates --upgrade",
+    "upgrade:20": "shx rm -f package-lock.json",
+    "upgrade:30": "npm install",
+    "upgrade": "run-s --silent upgrade:*",
+    "clean": "shx rm -Rf coverage distributable process",
+    "lint:10": "eslint --ignore-path .gitignore source",
+    "lint:20": "check-dependency",
+    "lint": "run-s --silent lint:*",
+    "build:10": "babel source --copy-files --extensions .cjs,.js --keep-file-extension --out-dir distributable --source-maps",
+    "build": "run-s --silent clean lint build:*",
+    "start:data:10": "shx mkdir -p process/data",
+    "start:data:20": "mongod --config data.configuration",
+    "start:data": "run-s --silent start:data:*",
+    "stop:data:10": "kill $(cat process/data/mongod.lock)",
+    "stop:data": "run-s --silent stop:data:*",
+    "run:10": "node --no-warnings --unhandled-rejections=strict",
+    "run": "run-s --silent build start:data \"run:10 {@}\" stop:data --",
+    "test:10": "c8 ava",
+    "test": "run-s --silent build start:data \"test:10 {@}\" stop:data --",
+    "pre:push:10": "git add coverage distributable",
+    "pre:push:20": "git commit --message=\"post-test\"",
+    "pre:push": "run-s --silent test pre:push:*",
+    "push:10": "npm version prerelease",
+    "push:20": "git push origin master",
+    "push": "run-s --silent pre:push push:*"
+  },
+  "type": "module",
+  "version": "0.0.1-0",
+  "devDependencies": {
+    "@babel/cli": "^7.10.5",
+    "@babel/core": "^7.11.4",
+    "@babel/plugin-syntax-import-meta": "^7.10.4",
+    "@virtualpatterns/mablung-babel-plugin-replace-identifier": "git+https://github.com/virtualpatterns/mablung-babel-plugin-replace-identifier.git",
+    "@virtualpatterns/mablung-check-dependency": "git+https://github.com/virtualpatterns/mablung-check-dependency",
+    "@virtualpatterns/mablung-source-map-support": "git+https://github.com/virtualpatterns/mablung-source-map-support.git",
+    "ava": "^3.12.0",
+    "babel-eslint": "^10.1.0",
+    "c8": "^7.3.0",
+    "eslint": "^7.7.0",
+    "eslint-plugin-babel": "^5.3.1",
+    "npm-check-updates": "^7.1.1",
+    "npm-run-all": "^4.1.5",
+    "shx": "^0.3.2"
+  },
+  "dependencies": {
+    "@pwn/is": "^1.0.2",
+    "@virtualpatterns/mablung-migration": "git+https://github.com/virtualpatterns/mablung-migration.git",
+    "mongodb": "^3.6.0"
+  }
+}
