@@ -11,7 +11,7 @@ class Migration extends BaseMigration {
     await this._database.open();
 
     try {
-      return await this._database.existsIndexMigrationUnique();
+      return await this._database.existsIndexMigration();
     } finally {
       await this._database.close();
     }
@@ -19,14 +19,14 @@ class Migration extends BaseMigration {
   }
 
   install() {
-    return this._database.createIndexMigrationUnique();
+    return this._database.createIndexMigration();
   }
 
   uninstall() {
-    return this._database.dropIndexMigrationUnique();
+    return this._database.dropIndexMigration();
   }}
 
 
 
 export default Migration;
-//# sourceMappingURL=20200820234901-create-index-migration-unique.js.map
+//# sourceMappingURL=20200820234901-create-index-migration.js.map

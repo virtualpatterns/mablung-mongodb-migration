@@ -56,29 +56,33 @@ class Database extends EventEmitter {
     return this._database.dropCollection('migration');
   }
 
-  existsIndexMigrationUnique() {
-    return this.existsIndex('migration', 'migrationIndexUnique');
+  existsIndexMigration() {
+    return this.existsIndex('migration', 'migrationIndex');
   }
 
-  createIndexMigrationUnique() {
-    return this._database.collection('migration').createIndex({ 'name': 1 }, { 'name': 'migrationIndexUnique', 'unique': true });
+  createIndexMigration() {
+    return this._database.collection('migration').createIndex({ 'name': 1 }, { 'name': 'migrationIndex', 'unique': true });
   }
 
-  dropIndexMigrationUnique() {
-    return this._database.collection('migration').dropIndex('migrationIndexUnique');
+  dropIndexMigration() {
+    return this._database.collection('migration').dropIndex('migrationIndex');
   }
 
-  existsIndexMigrationFind() {
-    return this.existsIndex('migration', 'migrationIndexFind');
+  explainIndexMigration(name) {
+    return this._database.collection('migration').find({ 'name': name }).explain();
   }
 
-  createIndexMigrationFind() {
-    return this._database.collection('migration').createIndex({ 'name': 1, 'installed': 1, 'uninstalled': 1 }, { 'name': 'migrationIndexFind' });
-  }
+  // existsIndexMigrationFind() {
+  //   return this.existsIndex('migration', 'migrationIndexFind')
+  // }
 
-  dropIndexMigrationFind() {
-    return this._database.collection('migration').dropIndex('migrationIndexFind');
-  }
+  // createIndexMigrationFind() {
+  //   return this._database.collection('migration').createIndex({ 'name': 1, 'installed': 1, 'uninstalled': 1 }, { 'name': 'migrationIndexFind' })
+  // }
+
+  // dropIndexMigrationFind() {
+  //   return this._database.collection('migration').dropIndex('migrationIndexFind')
+  // }
 
   async isMigrationInstalled(name) {
 
