@@ -11,7 +11,7 @@ class Migration extends BaseMigration {
     await this._database.open()
 
     try {
-      return await this._database.existsIndexMigrationFind()
+      return await this._database.existsIndexMigration()
     } finally {
       await this._database.close()
     }
@@ -19,11 +19,11 @@ class Migration extends BaseMigration {
   }
 
   install() {
-    return this._database.createIndexMigrationFind()
+    return this._database.createIndexMigration()
   }
 
   uninstall() {
-    return this._database.dropIndexMigrationFind()
+    return this._database.dropIndexMigration()
   }
 
 }

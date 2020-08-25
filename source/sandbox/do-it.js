@@ -1,26 +1,38 @@
 import '@virtualpatterns/mablung-source-map-support/install'
-import MongoDB from 'mongodb'
 
-const { MongoClient } = MongoDB
+import { Database, Migration } from '../index.js'
 
 async function main() {
 
   try {
 
-    let client = await MongoClient.connect('mongodb://localhost:27017')
-    let database = client.db('test')
-
-    try {
-
-      let migration = database.collection('migration')
-      let data = await migration.findOne({ 'name': 'bobo', 'installed': { $ne: null }, 'uninstalled': null })
+    let url = 'mongodb://localhost:27017'
+    let name = 'sandbox'
   
-      console.dir(data, { 'depth': null })
+    await Migration.installMigration(url, name)
 
+    let database = new Database(url, name)
+  
+    await database.open()
+
+    // await database.dropIndexMigration()
+
+    // for (let index = 0; index < 100; index++) {
+    //   await database.installMigration(`migration-${index}`)
+    // }
+  
+    try {
+  
+      // console.log(await database.isMigrationInstalled('migration-50'))
+      let explanation = await database.explainIndexMigration('migration-50')
+      let winningPlan = explanation.queryPlanner.winningPlan
+  
+      console.dir(winningPlan, { 'depth': null })
+  
     } finally {
-      await client.close()
+      await database.close()
     }
-
+  
   } catch (error) {
     console.error(error)
   }

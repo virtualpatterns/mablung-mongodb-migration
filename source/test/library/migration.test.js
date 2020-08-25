@@ -1,55 +1,96 @@
 import Test from 'ava'
 
+import { Database } from '../../index.js'
 import { Migration } from './migration.js'
 
-Test.before(async (test) => {
-  test.context.url = 'mongodb://localhost:27017'
-  test.context.name = 'test-migration'
-})
+Test('Migration.getMigration(url, name)', async (test) => {
 
-Test.serial('Migration.getMigration(url, name)', async (test) => {
+  let url = 'mongodb://localhost:27017'
+  let name = 'getMigration'
 
-  let migration = await Migration.getMigration(test.context.url, test.context.name)
+  let migration = await Migration.getMigration(url, name)
 
-  test.is(migration.length, 4)
+  test.is(migration.length, 3)
   
   test.is(migration[0].name, '20200820234900-create-collection-migration')
   test.is(await migration[0].isInstalled(), false)
-  test.is(migration[1].name, '20200820234901-create-index-migration-unique')
+  test.is(migration[1].name, '20200820234901-create-index-migration')
   test.is(await migration[1].isInstalled(), false)
-  test.is(migration[2].name, '20200820234902-create-index-migration-find')
+  test.is(migration[2].name, '20200823213000-null')
   test.is(await migration[2].isInstalled(), false)
-  test.is(migration[3].name, '20200823213000-null')
-  test.is(await migration[3].isInstalled(), false)
 
 })
 
-Test.serial('Migration.installMigration(url, name)', async (test) => {
+Test('Migration.installMigration(url, name)', async (test) => {
 
-  await Migration.installMigration(test.context.url, test.context.name)
+  let url = 'mongodb://localhost:27017'
+  let name = 'installMigration'
 
-  let migration = await Migration.getMigration(test.context.url, test.context.name)
+  await Migration.installMigration(url, name)
 
-  test.is(migration.length, 4)
+  try {
 
-  test.is(await migration[0].isInstalled(), true)
-  test.is(await migration[1].isInstalled(), true)
-  test.is(await migration[2].isInstalled(), true)
-  test.is(await migration[3].isInstalled(), true)
+    let migration = await Migration.getMigration(url, name)
+
+    test.is(migration.length, 3)
+  
+    test.is(await migration[0].isInstalled(), true)
+    test.is(await migration[1].isInstalled(), true)
+    test.is(await migration[2].isInstalled(), true)
+  
+  } finally {
+    await Migration.uninstallMigration(url, name)
+  }
 
 })
 
-Test.serial('Migration.uninstallMigration(url, name)', async (test) => {
+Test('Migration.uninstallMigration(url, name)', async (test) => {
 
-  await Migration.uninstallMigration(test.context.url, test.context.name)
+  let url = 'mongodb://localhost:27017'
+  let name = 'uninstallMigration'
 
-  let migration = await Migration.getMigration(test.context.url, test.context.name)
+  await Migration.installMigration(url, name)
+  await Migration.uninstallMigration(url, name)
 
-  test.is(migration.length, 4)
+  let migration = await Migration.getMigration(url, name)
+
+  test.is(migration.length, 3)
 
   test.is(await migration[0].isInstalled(), false)
   test.is(await migration[1].isInstalled(), false)
   test.is(await migration[2].isInstalled(), false)
-  test.is(await migration[3].isInstalled(), false)
+
+})
+
+Test('migrationIndex', async (test) => {
+
+  let url = 'mongodb://localhost:27017'
+  let name = 'migrationIndex'
+
+  await Migration.installMigration(url, name)
+
+  try {
+    
+    let database = new Database(url, name)
+
+    await database.open()
+
+    try {
+
+      let explanation = await database.explainIndexMigration('migrationIndex')
+      let winningPlan = explanation.queryPlanner.winningPlan
+
+      test.log(winningPlan)
+      test.is(winningPlan.stage, 'FETCH')
+      test.is(winningPlan.inputStage.stage, 'IXSCAN')
+      test.is(winningPlan.inputStage.indexName, 'migrationIndex')
+
+    } finally {
+      await database.close()
+    }
+
+  } finally {
+    await Migration.uninstallMigration(url, name)
+  }
 
 })
