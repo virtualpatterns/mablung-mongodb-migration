@@ -80,7 +80,7 @@ Test('migrationIndex', async test => {
       let explanation = await database.explainIndexMigration('migrationIndex');
       let winningPlan = explanation.queryPlanner.winningPlan;
 
-      test.log(winningPlan);
+      // test.log(winningPlan)
       test.is(winningPlan.stage, 'FETCH');
       test.is(winningPlan.inputStage.stage, 'IXSCAN');
       test.is(winningPlan.inputStage.indexName, 'migrationIndex');
