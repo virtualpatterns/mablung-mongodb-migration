@@ -1,0 +1,8 @@
+{
+  "test/library/migration.test.js": {
+    "url": "mongodb://localhost/test-library-migration",
+    "option": { 
+      "monitorCommands": true
+    }
+  }
+}

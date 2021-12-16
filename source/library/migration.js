@@ -1,114 +1,85 @@
-import { Migration as BaseMigration } from '@virtualpatterns/mablung-migration'
+import { CreateMigration, Migration as BaseMigration } from '@virtualpatterns/mablung-migration'
+import FileSystem from 'fs-extra'
+import Is from '@pwn/is'
 import Path from 'path'
 
 import { Database } from './database.js'
 
 const FilePath = __filePath
 const FolderPath = Path.dirname(FilePath)
+const Require = __require
 
-class Migration extends BaseMigration {
+class Migration extends CreateMigration(BaseMigration, Path.normalize(`${FolderPath}/../../source/library/migration`), Path.normalize(`${FolderPath}/../../source/library/migration/template.js`), `${FolderPath}/migration`) {
 
   constructor(path, database) {
-    super(path)
-    this._database = database
-  }
-
-  /* c8 ignore next 3 */
-  get database() {
-    return this._database
+    super(Is.string(path) ? path : FilePath)
+    this.database = Is.string(path) ? database : path
   }
 
   async isInstalled() {
 
-    await this._database.open()
+    let isInstalled = null
+
+    await this.database.open()
 
     try {
-      return  (await this._database.existsCollectionMigration()) &&
-              (await this._database.isMigrationInstalled(this._name))
+      isInstalled = await this.database.isMigrationInstalled(this.name)
     } finally {
-      await this._database.close()
+      await this.database.close()
     }
+
+    return isInstalled
 
   }
 
   install() {
-    return this._database.installMigration(this._name)
+    return this.database.installMigration(this.name)
   }
 
   uninstall() {
-    return this._database.uninstallMigration(this._name)
+    return this.database.uninstallMigration(this.name)
   }
 
-  static createMigration(name, path = Path.normalize(`${FolderPath}/../../source/library/migration`), templatePath = Path.normalize(`${FolderPath}/../../source/library/migration/template.js`)) {
-    return super.createMigration(name, path, templatePath)
+  static createDatabase(...argument) { // argument is [ name, path ]
+    return new Database(...this.getDatabaseConfiguration(...argument))
   }
 
-  static async getMigration(...parameter) { // parameter is [ database ] or [ url, name ]
+  static getDatabaseConfiguration(name = 'default', path = Require.resolve('./database.json')) {
 
-    let [ database ] = parameter
-    let [ url, name ] = parameter
+    let configuration = FileSystem.readJsonSync(path, { 'encoding': 'utf-8' })
+    let url = configuration[name].url
+    let option = configuration[name]?.option || {}
 
-    if (database instanceof Database) {
-      ({ url, name } = database)
-    } else {
-      database = new Database(url, name)
-    }
-
-    return (await Promise.all([ super.getMigration(), this.getMigrationFromPath(`${FolderPath}/migration`, [ '*.js' ], [ 'template.js' ], database) ])).flat().sort()
-  
-  }
-
-  static getMigrationFromPath(path, includePattern, excludePattern, ...parameter) { // parameter is [ database ] or [ url, name ]
-
-    let [ database ] = parameter
-    let [ url, name ] = parameter
-
-    if (database instanceof Database) {
-      ({ url, name } = database)
-    } else {
-      database = new Database(url, name)
-    }
-
-    return super.getMigrationFromPath(path, includePattern, excludePattern, database)
+    return [ url, option ]
 
   }
 
-  static async installMigration(...parameter) { // parameter is [ database ] or [ url, name ]
+  static getRawMigration(includeFrom, includeTo, ...argument) { // argument is [ database ] or [ name, path ]
+    return super.getRawMigration(includeFrom, includeTo, (argument[0] instanceof Database) ? argument[0] : this.createDatabase(...argument))
+  }
 
-    let [ database ] = parameter
-    let [ url, name ] = parameter
+  static async installMigration(includeFrom, includeTo, ...argument) { // argument is [ database ] or [ name, path ]
 
-    if (database instanceof Database) {
-      ({ url, name } = database)
-    } else {
-      database = new Database(url, name)
-    }
+    let database = (argument[0] instanceof Database) ? argument[0] : this.createDatabase(...argument)
 
     await database.open()
 
     try {
-      await super.installMigration(database)
+      await super.installMigration(includeFrom, includeTo, database)
     } finally {
       await database.close()
     }
 
   }
 
-  static async uninstallMigration(...parameter) { // parameter is [ database ] or [ url, name ]
+  static async uninstallMigration(includeFrom, includeTo, ...argument) { // argument is [ database ] or [ name, path ]
   
-    let [ database ] = parameter
-    let [ url, name ] = parameter
-
-    if (database instanceof Database) {
-      ({ url, name } = database)
-    } else {
-      database = new Database(url, name)
-    }
+    let database = (argument[0] instanceof Database) ? argument[0] : this.createDatabase(...argument)
 
     await database.open()
 
     try {
-      await super.uninstallMigration(database)
+      await super.uninstallMigration(includeFrom, includeTo, database)
     } finally {
       await database.close()
     }

@@ -1,90 +1,41 @@
 {
   "author": "virtualpatterns.com <code@virtualpatterns.com> (http://www.virtualpatterns.com)",
-  "ava": {
-    "failFast": true,
-    "files": [
-      "release/test/**/*.test.*"
-    ],
-    "nodeArguments": [
-      "--no-warnings",
-      "--unhandled-rejections=strict"
-    ],
-    "require": [
-      "@virtualpatterns/mablung-source-map-support/install"
-    ],
-    "verbose": true
-  },
-  "c8": {
-    "all": true,
-    "exclude": [
-      "release/sandbox",
-      "release/test",
-      "source/sandbox",
-      "source/test"
-    ],
-    "reporter": [
-      "html"
-    ]
-  },
   "description": "TBD",
   "exports": {
-    ".": "./release/index.js"
+    ".": "./release/index.js",
+    "./test": "./release/test/index.js",
+    "./package.json": "./package.json"
   },
+  "files": [
+    "release/library",
+    "release/test/library/create-logged-database.*",
+    "release/test/library/create-logged-migration.*",
+    "release/index.*"
+  ],
   "license": "GPL-3.0+",
   "name": "@virtualpatterns/mablung-mongodb-migration",
   "repository": {
     "type": "git",
     "url": "https://github.com/virtualpatterns/mablung-mongodb-migration"
   },
-  "scripts": {
-    "refresh": "rm -Rf node_modules package-lock.json && npm cache clean --force && npm install",
-    "upgrade:10": "npm-check-updates --upgrade",
-    "upgrade:20": "shx rm -f package-lock.json",
-    "upgrade:30": "npm install",
-    "upgrade": "run-s --silent upgrade:*",
-    "clean": "shx rm -Rf coverage process release",
-    "lint:10": "eslint --ignore-path .gitignore source",
-    "lint:20": "check-dependency",
-    "lint": "run-s --silent lint:*",
-    "build:10": "babel source --copy-files --extensions .cjs,.js --keep-file-extension --out-dir release --source-maps",
-    "build": "run-s --silent clean lint build:*",
-    "run:data:10": "shx mkdir -p process/data",
-    "run:data:20": "mongod --config data.configuration",
-    "run:data": "run-s --silent run:data:*",
-    "run:node": "node --no-warnings --unhandled-rejections=strict",
-    "run:parallel": "run-p --race --silent run:data \"run:node {@}\" --",
-    "run": "run-s --silent build \"run:parallel {@}\" --",
-    "test:ava": "c8 ava",
-    "test:parallel": "run-p --race --silent run:data \"test:ava {@}\" --",
-    "test": "run-s --silent build \"test:parallel {@}\" --",
-    "pre:push:10": "git add coverage release",
-    "pre:push:20": "git commit --message=\"post-test\"",
-    "pre:push": "run-s --silent test pre:push:*",
-    "push:10": "npm version prerelease",
-    "push:20": "git push origin master",
-    "push": "run-s --silent pre:push push:*"
-  },
   "type": "module",
   "version": "0.0.1-4",
-  "devDependencies": {
-    "@babel/cli": "^7.12.10",
-    "@babel/core": "^7.12.10",
-    "@babel/plugin-syntax-import-meta": "^7.10.4",
-    "@virtualpatterns/mablung-babel-plugin-replace-identifier": "git+https://github.com/virtualpatterns/mablung-babel-plugin-replace-identifier.git",
-    "@virtualpatterns/mablung-check-dependency": "git+https://github.com/virtualpatterns/mablung-check-dependency",
-    "@virtualpatterns/mablung-source-map-support": "git+https://github.com/virtualpatterns/mablung-source-map-support.git",
-    "ava": "^3.14.0",
-    "babel-eslint": "^10.1.0",
-    "c8": "^7.3.5",
-    "eslint": "^7.16.0",
-    "eslint-plugin-babel": "^5.3.1",
-    "npm-check-updates": "^10.2.5",
-    "npm-run-all": "^4.1.5",
-    "shx": "^0.3.3"
-  },
   "dependencies": {
     "@pwn/is": "^1.0.2",
-    "@virtualpatterns/mablung-migration": "git+https://github.com/virtualpatterns/mablung-migration.git",
-    "mongodb": "^3.6.3"
+    "@virtualpatterns/mablung-configuration": "^0.0.2-49",
+    "@virtualpatterns/mablung-console": "^0.0.2-91",
+    "@virtualpatterns/mablung-migration": "0.0.1-45",
+    "fs-extra": "^10.0.0",
+    "mongodb": "^4.2.2"
+  },
+  "devDependencies": {
+    "@virtualpatterns/babel-preset-mablung-makefile-environment": "0.0.26-13",
+    "@virtualpatterns/eslint-config-mablung-makefile-environment": "0.0.26-13",
+    "@virtualpatterns/mablung-check-dependency": "0.0.26-41",
+    "@virtualpatterns/mablung-makefile-environment": "0.0.26-35",
+    "@virtualpatterns/mablung-source-map-support": "0.0.26-46",
+    "ava": "^3.15.0",
+    "shx": "^0.3.3",
+    "sinon": "^12.0.1"
   }
 }

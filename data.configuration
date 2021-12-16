@@ -1,6 +1,0 @@
-storage:
-  dbPath: process/data
-systemLog:
-  destination: file
-  path: process/data/data.log
-  logAppend: true

@@ -1,118 +1,63 @@
-import EventEmitter from 'events'
+import { Configuration } from '@virtualpatterns/mablung-configuration'
+import { MongoClient } from 'mongodb'
 import Is from '@pwn/is'
-import MongoDB from 'mongodb'
 
-const { MongoClient } = MongoDB
+class Database {
 
-class Database extends EventEmitter {
+  constructor(userUrl, userOption = {}) {
 
-  constructor(url, name) {
-    super()
+    this.databaseUrl = userUrl
+    this.databaseOption = Configuration.getOption(this.defaultOption, userOption)
 
-    this._url = url
-    this._name = name
-
-    this._client = null
-    this._database = null
-    this._count = 0
+    this.client = null
+    this.database = null
+    this.count = 0
 
   }
 
-  /* c8 ignore next 3 */
-  get url() {
-    return this._url
-  }
-
-  /* c8 ignore next 3 */
-  get name() {
-    return this._name
+  get defaultOption() {
+    return {}
   }
 
   async open() {
 
-    if (this._count === 0) {
-        
-      let client = await MongoClient.connect(this._url, { 'useUnifiedTopology': true })
-      let database = await client.db(this._name)
+    if (Is.equal(this.count, 0)) {
 
-      this._client = client
-      this._database = database
+      let client = await MongoClient.connect(this.databaseUrl, this.databaseOption)
+      let database = await client.db()
+
+      this.client = client
+      this.database = database
 
     }
 
-    this._count++
+    return ++this.count
 
   }
 
-  existsCollectionMigration() {
-    return this.existsCollection('migration')
+  drop() {
+    return this.database.dropDatabase()
   }
 
-  createCollectionMigration() {
-    return this._database.createCollection('migration')
-  }
+  async close() {
 
-  dropCollectionMigration() {
-    return this._database.dropCollection('migration')
-  }
+    if (Is.equal(this.count, 1)) {
 
-  existsIndexMigration() {
-    return this.existsIndex('migration', 'migrationIndex')
-  }
+      await this.client.close()
 
-  createIndexMigration() {
-    return this._database.collection('migration').createIndex({ 'name': 1 }, { 'name': 'migrationIndex', 'unique': true })
-  }
+      // this.database = null
+      // this.client = null
 
-  dropIndexMigration() {
-    return this._database.collection('migration').dropIndex('migrationIndex')
-  }
+    }
 
-  explainIndexMigration(name) {
-    return this._database.collection('migration').find({ 'name': name }).explain()
-  }
+    return --this.count
 
-  // existsIndexMigrationFind() {
-  //   return this.existsIndex('migration', 'migrationIndexFind')
-  // }
-
-  // createIndexMigrationFind() {
-  //   return this._database.collection('migration').createIndex({ 'name': 1, 'installed': 1, 'uninstalled': 1 }, { 'name': 'migrationIndexFind' })
-  // }
-
-  // dropIndexMigrationFind() {
-  //   return this._database.collection('migration').dropIndex('migrationIndexFind')
-  // }
-
-  async isMigrationInstalled(name) {
-
-    let migration = await this._database.collection('migration').findOne({ 'name': name }) //, 'installed': { $ne: null }, 'uninstalled': null })
-
-    return Is.not.null(migration) && Is.not.null(migration.installed) && Is.null(migration.uninstalled) // Is.null(data) ? false : true
-
-  }
-
-  installMigration(name) { 
-    // findOneAndReplace because a record may not exist
-    return this._database.collection('migration').findOneAndReplace(
-      { 'name': name }, 
-      { 'name': name, 'installed': new Date(), 'uninstalled': null }, 
-      { 'upsert': true })
-  }
-
-  uninstallMigration(name) {
-    return this._database.collection('migration').findOneAndUpdate(
-      { 'name': name }, // 'installed': { $ne: null }, 'uninstalled': null }, 
-      { '$set': { 'uninstalled': new Date() } })
   }
 
   async existsCollection(name) {
 
-    let cursor = this._database.listCollections()
-
-    let data = null
-    data = await cursor.toArray()
-    data = data.filter((collection) => collection.name === name)
+    let cursor = this.database.listCollections({ 'name': name })
+    let data = await cursor.toArray()
 
     return data.length > 0 ? true : false
 
@@ -122,36 +67,113 @@ class Database extends EventEmitter {
 
     if (await this.existsCollection(collectionName)) {
 
-      let collection = this._database.collection(collectionName)
-      let cursor = collection.listIndexes()
-  
-      let data = null
-      data = await cursor.toArray()
-      data = data.filter((index) => index.name === indexName)
-  
-      return data.length > 0 ? true : false
+      let collection = this.database.collection(collectionName)
 
-    } else { 
-      return false 
+      return collection.indexExists(indexName)
+
+    } else {
+      return false
     }
 
   }
 
-  async close() {
+  async isMigrationInstalled(name) {
 
-    if (this._count === 1) {
+    let migration = await this.database
+      .collection('migration')
+      .findOne(
+        {
+          'name': name,
+          'installed': { '$gt': 0 }
+        },
+        {
+          'hint': {
+            'name': 1,
+            'installed': 1
+          },
+          'project': {}
+        }
+      )
 
-      await this._client.close()
+    return Is.not.null(migration)
 
-      this._database = null
-      this._client = null
+  }
+
+  installMigration(name) {
+
+    return this.database
+      .collection('migration')
+      .updateOne(
+        { 'name': name },
+        {
+          '$inc': { 'installed': 1 },
+          '$push': {
+            'history': {
+              'installed': new Date(),
+              'uninstalled': null
+            }
+          },
+          '$set': { 'updated': new Date() },
+          '$setOnInsert': {
+            'name': name,
+            'created': new Date()
+          }
+        },
+        {
+          'hint': { 'name': 1 },
+          'upsert': true
+        }
+      )
+    
+  }
+
+  async uninstallMigration(name) {
+
+    let migration = await this.database
+      .collection('migration')
+      .findOne({ 'name': name })
+    
+    if (Is.not.null(migration)) {
+
+      let history = null
+      history = migration.history
+        .map((history, index) => ({ index, 'uninstalled': history.uninstalled }))
+        .filter((history) => Is.null(history.uninstalled))
+        .reverse()
+
+      history = history[0]
+
+      if (Is.not.nil(history)) {
+
+        return this.database
+          .collection('migration')
+          .updateOne(
+            { 'name': name },
+            {
+              '$inc': { 'installed': -1 },
+              '$set': {
+                'updated': new Date(),
+                [`history.${history.index}.uninstalled`]: new Date()
+              }
+            }
+          )
+
+      }
 
     }
-
-    this._count--
-
+    
   }
 
 }
+
+[
+  'createCollection',
+  'dropCollection',
+  'collection'
+].forEach((methodName) => {
+  Database.prototype[methodName] = function (...argument) {
+    return this.database[methodName](...argument)
+  }
+})
 
 export { Database }
