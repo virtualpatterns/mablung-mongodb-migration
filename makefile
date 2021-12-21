@@ -5,17 +5,26 @@ endif
 
 include $(mablung-makefile-environment-path)
 
+run::
+	$(info )
+	@$(MAKE) --no-print-directory mongod-stop
+
+pre-run:: mongod-start
+	$(eval export NPX_PATH = $(shell npx which npx))
+
 cover::
 	$(info )
 	@$(MAKE) --no-print-directory mongod-stop
 
 pre-cover:: mongod-start
+	$(eval export NPX_PATH = $(shell npx which npx))
 
 test::
 	$(info )
 	@$(MAKE) --no-print-directory mongod-stop
 
 pre-test:: mongod-start
+	$(eval export NPX_PATH = $(shell npx which npx))
 
 # --------------------
 .PHONY: mongod-start mongod-stop

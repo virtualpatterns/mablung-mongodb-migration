@@ -24,7 +24,7 @@
     "@pwn/is": "^1.0.2",
     "@virtualpatterns/mablung-configuration": "^0.0.2-49",
     "@virtualpatterns/mablung-console": "^0.0.2-91",
-    "@virtualpatterns/mablung-migration": "0.0.1-45",
+    "@virtualpatterns/mablung-migration": "0.0.1-54",
     "fs-extra": "^10.0.0",
     "mongodb": "^4.2.2"
   },
@@ -34,6 +34,7 @@
     "@virtualpatterns/mablung-check-dependency": "0.0.26-41",
     "@virtualpatterns/mablung-makefile-environment": "0.0.26-35",
     "@virtualpatterns/mablung-source-map-support": "0.0.26-46",
+    "@virtualpatterns/mablung-worker": "^0.0.2-106",
     "ava": "^3.15.0",
     "shx": "^0.3.3",
     "sinon": "^12.0.1"

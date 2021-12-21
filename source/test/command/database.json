@@ -1,0 +1,8 @@
+{
+  "test/command/index.test.js": {
+    "url": "mongodb://localhost/test-command-index",
+    "option": { 
+      "monitorCommands": true
+    }
+  }
+}

@@ -1,6 +1,5 @@
 import { CreateMigration, Migration as BaseMigration } from '@virtualpatterns/mablung-migration'
 import FileSystem from 'fs-extra'
-import Is from '@pwn/is'
 import Path from 'path'
 
 import { Database } from './database.js'
@@ -12,8 +11,8 @@ const Require = __require
 class Migration extends CreateMigration(BaseMigration, Path.normalize(`${FolderPath}/../../source/library/migration`), Path.normalize(`${FolderPath}/../../source/library/migration/template.js`), `${FolderPath}/migration`) {
 
   constructor(path, database) {
-    super(Is.string(path) ? path : FilePath)
-    this.database = Is.string(path) ? database : path
+    super(path)
+    this.database = database
   }
 
   async isInstalled() {

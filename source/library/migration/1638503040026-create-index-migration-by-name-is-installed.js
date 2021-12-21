@@ -1,4 +1,3 @@
-import Is from '@pwn/is'
 
 import { Migration as BaseMigration } from '../migration.js'
 
@@ -6,8 +5,8 @@ const FilePath = __filePath
 
 class Migration extends BaseMigration {
 
-  constructor(path, database) {
-    super(Is.string(path) ? path : FilePath, Is.string(path) ? database : path)
+  constructor(database) {
+    super(FilePath, database)
   }
 
   async isInstalled() {
@@ -17,7 +16,7 @@ class Migration extends BaseMigration {
     await this.database.open()
 
     try {
-      isInstalled = await this.database.existsIndex('migration', 'migrationByNameInstalled')
+      isInstalled = await this.database.existsIndex('migration', 'migrationByNameIsInstalled')
     } finally {
       await this.database.close()
     }
@@ -32,16 +31,16 @@ class Migration extends BaseMigration {
       .createIndex(
         [
           { 'name': 1 },
-          { 'installed': 1 }
+          { 'isInstalled': 1 }
         ],
-        { 'name': 'migrationByNameInstalled' }
+        { 'name': 'migrationByNameIsInstalled' }
       )
   }
 
   uninstall() {
     return this.database
       .collection('migration')
-      .dropIndex('migrationByNameInstalled')
+      .dropIndex('migrationByNameIsInstalled')
   } 
 
 }

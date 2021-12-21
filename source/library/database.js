@@ -84,12 +84,12 @@ class Database {
       .findOne(
         {
           'name': name,
-          'installed': { '$gt': 0 }
+          'isInstalled': true
         },
         {
           'hint': {
             'name': 1,
-            'installed': 1
+            'isInstalled': 1
           },
           'project': {}
         }
@@ -106,18 +106,10 @@ class Database {
       .updateOne(
         { 'name': name },
         {
-          '$inc': { 'installed': 1 },
-          '$push': {
-            'history': {
-              'installed': new Date(),
-              'uninstalled': null
-            }
-          },
-          '$set': { 'updated': new Date() },
-          '$setOnInsert': {
-            'name': name,
-            'created': new Date()
-          }
+          '$setOnInsert': { 'name': name },
+          '$set': { 'isInstalled': true },
+          '$currentDate': { 'whenInstalled': true },
+          '$unset': { 'whenUnInstalled': '' }
         },
         {
           'hint': { 'name': 1 },
@@ -129,39 +121,50 @@ class Database {
 
   async uninstallMigration(name) {
 
-    let migration = await this.database
+    // let migration = await this.database
+    //   .collection('migration')
+    //   .findOne({ 'name': name })
+    
+    // if (Is.not.null(migration)) {
+
+    //   let history = null
+    //   history = migration.history
+    //     .map((history, index) => ({ index, 'uninstalled': history.uninstalled }))
+    //     .filter((history) => Is.null(history.uninstalled))
+    //     .reverse()
+
+    //   history = history[0]
+
+    //   if (Is.not.nil(history)) {
+
+    //     return this.database
+    //       .collection('migration')
+    //       .updateOne(
+    //         { 'name': name },
+    //         {
+    //           '$inc': { 'installed': -1 },
+    //           '$set': {
+    //             'updated': new Date(),
+    //             [`history.${history.index}.uninstalled`]: new Date()
+    //           }
+    //         }
+    //       )
+
+    //   }
+
+    // }
+
+    return this.database
       .collection('migration')
-      .findOne({ 'name': name })
-    
-    if (Is.not.null(migration)) {
+      .updateOne(
+        { 'name': name },
+        {
+          '$set': { 'isInstalled': false },
+          '$currentDate': { 'whenUnInstalled': true }
+        },
+        { 'hint': { 'name': 1 } }
+      )
 
-      let history = null
-      history = migration.history
-        .map((history, index) => ({ index, 'uninstalled': history.uninstalled }))
-        .filter((history) => Is.null(history.uninstalled))
-        .reverse()
-
-      history = history[0]
-
-      if (Is.not.nil(history)) {
-
-        return this.database
-          .collection('migration')
-          .updateOne(
-            { 'name': name },
-            {
-              '$inc': { 'installed': -1 },
-              '$set': {
-                'updated': new Date(),
-                [`history.${history.index}.uninstalled`]: new Date()
-              }
-            }
-          )
-
-      }
-
-    }
-    
   }
 
 }
