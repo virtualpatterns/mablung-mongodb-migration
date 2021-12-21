@@ -19,7 +19,7 @@
     "url": "https://github.com/virtualpatterns/mablung-mongodb-migration"
   },
   "type": "module",
-  "version": "0.0.1-6",
+  "version": "0.0.1-7",
   "dependencies": {
     "@pwn/is": "^1.0.2",
     "@virtualpatterns/mablung-configuration": "^0.0.2-49",
